@@ -120,6 +120,9 @@ export async function playerRoomThreads(guildTradingMultiplier)
 
       guildTradingResult = await handleGuildTrading(messages[j]);
       
+      if(!guildTradingResult)
+        continue;
+      
       break;
     }
 
@@ -222,7 +225,7 @@ async function handleGuildTrading(message)
   let regex = /จากยอดขายได้ทั้งหมด (-?\d+) gp.*guild earned : (-?\d+).*character payment :\*\* (-?\d+) gp/g;
   var regexResult = regex.exec(content);
   if(regexResult.length != 4)
-    return { total: 0, guild: 0, player: 0, messageId: message.id, channelId: message.channel_id };
+    return null;
 
   return {
     total: parseInt(regexResult[1]),
@@ -230,6 +233,7 @@ async function handleGuildTrading(message)
     player: parseInt(regexResult[3]),
     messageId: message.id,
     channelId: message.channel_id,
+    content: content
   }
 }
 async function handleGuildAssist(messages, avraeId, timestamp)

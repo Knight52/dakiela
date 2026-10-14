@@ -1,0 +1,50 @@
+{
+  "name": "dakiela",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "register": "node commands.js",
+    "initdb": "node database/init.js",
+    "import_items": "node database/import_items.js",
+    "import_people": "node database/import_people.js",
+    "import_occupation": "node database/import_occupation.js",
+    "import_establishment": "node database/import_establishment.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "postbuild": "node commands.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@vercel/functions": "^3.9.5",
+    "dice-roller-parser": "^0.1.8",
+    "discord": "^0.8.2",
+    "discord-interactions": "^4.4.0",
+    "dotenv": "^17.4.2",
+    "fast-csv": "^5.0.5",
+    "micro": "^10.0.1",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "sqlite3": "^5.1.7",
+    "vercel": "^59.9.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/jest": "^30.0.0",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "node-mocks-http": "^1.18.1",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2"
+  }
+}
