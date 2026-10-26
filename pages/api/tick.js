@@ -85,11 +85,11 @@ export async function playerRoomThreads(guildTradingMultiplier)
       j += guildAssistResult.postRead;
     }
 
-    if(rollResult.length >= 0)
+    if(rollResult.length > 0)
     {
       embeds.push({
         "title": "Compensation for Guild Assist",
-        "description": `จ่ายค่าตอบแทน  Guild Assist มูลค่า ${20*rollResult.length} gp.`,
+        "description": `จ่ายค่าตอบแทน Guild Assist มูลค่า ${20*rollResult.length} gp.`,
         "thumbnail": {
           "url": "https://ao4cowzhmgwkktn4.public.blob.vercel-storage.com/Gemini_Generated_Image_kqolbhkqolbhkqol.jpg"
         },
@@ -128,9 +128,14 @@ export async function playerRoomThreads(guildTradingMultiplier)
 
     if(guildTradingResult)
     {
-      guildTradingResult.total *= guildTradingMultiplier;
-      guildTradingResult.player *= guildTradingMultiplier;
-      guildTradingResult.guild *= guildTradingMultiplier;
+      if(guildTradingMultiplier != 1)
+      {
+        let playerPercent = guildTradingResult.player / guildTradingResult.total;
+        let total = guildTradingResult.total * guildTradingMultiplier;
+        guildTradingResult.total = total;
+        guildTradingResult.player = total * playerPercent;
+        guildTradingResult.guild = total - 100 - guildTradingResult.player;
+      }
       let desc = `กิลด์ค้าขายได้รับทั้งหมด ${guildTradingResult.total.toLocaleString()} gp.\nโดยคุณได้รับจากการช่วยเหลือ ${guildTradingResult.player.toLocaleString()} gp. และกิลด์ได้รับ ${guildTradingResult.guild.toLocaleString()} gp.`;
       guildTradings.push(guildTradingResult);
       embeds.push({
@@ -179,14 +184,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
                 value: `สำเร็จ ${assistSuccess.length} ล้มเหลว ${assistFail.length}`,
                 inline: true
               },
-              {
-                name: "Success",
-                value: `${assistSuccess.map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
-              },
-              {
-                name: "Failure",
-                value: `${assistFail.map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
-              }
+              ...assistFields(assistSuccess, assistFail, channelInfo)
             ],
             "color": 0x5B251A,
             "thumbnail":{
@@ -202,10 +200,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
                   กิลด์ได้ - ${totalGuildTrading.guild.toLocaleString()} gp. 
                   เข้าตัวละคร - ${totalGuildTrading.player.toLocaleString()} gp`
               },
-              {
-                "name": "Found Trades",
-                "value": guildTradings.map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
-              }
+              ...tradingFields(guildTradings, channelInfo)
             ],
             "color": 0xFFFF00,
             "thumbnail":{
@@ -218,6 +213,53 @@ export async function playerRoomThreads(guildTradingMultiplier)
   ));
   await Promise.all(requests);
   return out;
+}
+function assistFields(assistSuccess, assistFail, channelInfo)
+{
+  var outgoing = [{
+      name: "Success",
+      value: `${assistSuccess.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+    }
+  ];
+
+  for(let i = 5; i< assistSuccess.length; i += 5)
+  {
+    outgoing.push({
+      name: "",
+      value: `${assistSuccess.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+    })
+  }
+
+  outgoing.push(
+    {
+      name: "Failure",
+      value: `${assistFail.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+    });
+
+  for(let i = 5; i< assistFail.length; i += 5)
+  {
+    outgoing.push({
+      name: "",
+      value: `${assistFail.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+    })
+  }
+  return outgoing;
+}
+function tradingFields(guildTradings, channelInfo)
+{
+  let outgoing = [{
+    "name": "Found Trades",
+    "value": guildTradings.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
+  }]
+  for(let i = 5; i< guildTradings.length; i += 5)
+  {
+    outgoing.push({
+      name: "",
+      value: guildTradings.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
+    })
+  }
+
+  return outgoing;
 }
 async function handleGuildTrading(message)
 {

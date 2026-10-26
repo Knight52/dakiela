@@ -143,7 +143,7 @@ export function DiscordSelectionBoxResponse(res, list, custom_id, msg)
 export async function DiscordRequest(endpoint, options) {
   // append endpoint to root API URL
   const url = 'https://discord.com/api/v10/' + endpoint;
-
+  
   let headers = {
     Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
   };

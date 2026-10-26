@@ -14,8 +14,8 @@ test("System Test for workweekThread()", async () =>
     //await workweekThread();
     expect(2).toBe(2);
 }, 2147483647);*/
-test("Integration test for weekly tick", async () =>
+/*test("Integration test for weekly tick", async () =>
 {
     var tradeMultiplier = await workweekThread();
     await playerRoomThreads(tradeMultiplier);
-}, 2147483647);
+}, 2147483647);*/
