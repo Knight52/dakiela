@@ -1,4 +1,3 @@
-import * as workweek from "@/ticks/workweek.js";
 import * as weeklyEvent from "@/ticks/weeklyevent.js";
 import * as utils from "@/utils.js";
 import * as event from "@/commands/event.js";
@@ -13,18 +12,28 @@ export default async function handler(req, res)
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return res.status(401).end('Unauthorized');
     }
+    var rows = (await db.execute("select * from configuration")).rows;
+    let entries = {};
+    rows.forEach(row=>
+    {
+      entries[row.name] = {
+        channel: row.channel,
+        user: row.user,
+        role: row.role,
+      }
+    });
     
-    let tradeMultiplier = await workweekThread();
-    await playerRoomThreads(tradeMultiplier);
+    let tradeMultiplier = await workweekThread(entries);
+    await playerRoomThreads(tradeMultiplier, entries);
 
     res.status(200).json({ name: "Tick complete!" });
 }
 
-export async function playerRoomThreads(guildTradingMultiplier)
+export async function playerRoomThreads(guildTradingMultiplier, entries)
 {
-  var forum = (await db.execute("select * from configuration where name = 'PLAYER_FORUM'")).rows[0].channel;
-  var avrae = (await db.execute("select user from configuration where name = 'AVRAE'")).rows[0].user;
-  var report = (await db.execute("select channel from configuration where name = 'REPORT'")).rows[0].channel;
+  var forum = entries['PLAYER_FORUM'].channel;
+  var avrae = entries['AVRAE'].user;
+  var report = entries['REPORT'].channel;
 
   var channelInfo = await utils.DiscordRequest(`channels/${forum}`, { method: 'GET' });
 
@@ -41,6 +50,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
   allThreads = allThreads.concat(archivedThreads.threads);
 
   var now = Date.now();
+  var weekAgoText = (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" });
   var out = [];
   var assistSuccess = [];
   var assistFail = [];
@@ -95,7 +105,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
         },
         "color": 0x5B251A,
         "footer":{
-          "text": `สัปดาห์ที่ ${(new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" })}`
+          "text": `สัปดาห์ที่ ${weekAgoText}`
         }
       });
       assistSuccess = assistSuccess.concat(rollResult.filter(x => x.result >= 13));
@@ -145,7 +155,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
           "url": "https://ao4cowzhmgwkktn4.public.blob.vercel-storage.com/Gemini_Generated_Image_kafeahkafeahkafe.jpg"
         },
         "footer": {
-          "text": `สัปดาห์ที่ ${(new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" })}`
+          "text": `สัปดาห์ที่ ${weekAgoText}`
         },
         "color": 0xFFFF00
       });
@@ -177,7 +187,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
       body: {
         embeds: [
           {
-            title: `รายงานผล Guild Assist สัปดาห์ที่ ${(new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" })}`,
+            title: `รายงานผล Guild Assist สัปดาห์ที่ ${weekAgoText}`,
             fields: [
               {
                 "name": "Overview",
@@ -192,7 +202,7 @@ export async function playerRoomThreads(guildTradingMultiplier)
             }
           },
           {
-            title: `รายงานผล Guild Trading สัปดาห์ที่ ${(new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" })}`,
+            title: `รายงานผล Guild Trading สัปดาห์ที่ ${weekAgoText}`,
             fields: [
               {
                 "name": "Overview",
@@ -216,52 +226,55 @@ export async function playerRoomThreads(guildTradingMultiplier)
 }
 function assistFields(assistSuccess, assistFail, channelInfo)
 {
+  const linkPerField = 10;
   var outgoing = [{
       name: "Success",
-      value: `${assistSuccess.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+      value: `${assistSuccess.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
     }
   ];
 
-  for(let i = 5; i< assistSuccess.length; i += 5)
+  for(let i = linkPerField; i< assistSuccess.length; i += linkPerField)
   {
     outgoing.push({
       name: "",
-      value: `${assistSuccess.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+      value: `${assistSuccess.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
     })
   }
 
   outgoing.push(
     {
       name: "Failure",
-      value: `${assistFail.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+      value: `${assistFail.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
     });
 
-  for(let i = 5; i< assistFail.length; i += 5)
+  for(let i = linkPerField; i< assistFail.length; i += linkPerField)
   {
     outgoing.push({
       name: "",
-      value: `${assistFail.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
+      value: `${assistFail.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId}`).join('\n')}`
     })
   }
   return outgoing;
 }
 function tradingFields(guildTradings, channelInfo)
 {
+  guildTradings = guildTradings.sort((a, b) => a.total - b.total);
+  const linkPerField = 10;
   let outgoing = [{
     "name": "Found Trades",
-    "value": guildTradings.slice(0, 5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
+    "value": guildTradings.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
   }]
-  for(let i = 5; i< guildTradings.length; i += 5)
+  for(let i = linkPerField; i< guildTradings.length; i += linkPerField)
   {
     outgoing.push({
       name: "",
-      value: guildTradings.slice(i, i+5).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
+      value: guildTradings.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.channelId}/${x.messageId} - ${x.total.toLocaleString()}/${x.guild.toLocaleString()}/${x.player.toLocaleString()} gp`).join("\n")
     })
   }
 
   return outgoing;
 }
-async function handleGuildTrading(message)
+export async function handleGuildTrading(message)
 {
   let content = JSON.stringify(message).toLowerCase().replace("\n", "").replace("\r", "");
   let regex = /จากยอดขายได้ทั้งหมด (-?\d+) gp.*guild earned : (-?\d+).*character payment :\*\* (-?\d+) gp/g;
@@ -278,7 +291,7 @@ async function handleGuildTrading(message)
     content: content
   }
 }
-async function handleGuildAssist(messages, avraeId, timestamp)
+export async function handleGuildAssist(messages, avraeId, timestamp)
 {
   var out = { postRead: 0, foundRolls: []};
   if(messages[0].author.id == avraeId && 
@@ -333,7 +346,7 @@ async function handleGuildAssist(messages, avraeId, timestamp)
   return out;
 }
 
-export async function workweekThread()
+export async function workweekThread(entries)
 {
   var attachments = [];
   var files = [];
@@ -344,15 +357,23 @@ export async function workweekThread()
     weeklyEvent.tick(multipliers), 
     ...(await event.tick(attachments, files))];
 
-  var workweekInfo = (await db.execute("select * from configuration where name = 'WEEKLY_TICK'")).rows[0];
-  var mainhall = (await db.execute("select channel from configuration where name = 'MAINHALL'")).rows[0].channel;
+  var workweekInfo = entries['WEEKLY_TICK'];
+  var mainhall = entries['MAINHALL'].channel;
   
-  result = await utils.DiscordRequest(`channels/${workweekInfo.channel}/messages`, 
+  await utils.DiscordRequest(`channels/${workweekInfo.channel}/messages`, 
     {
       method: 'POST', 
       body: {
         "content": "<@&" + workweekInfo.role + ">!",
-        "embeds": [await workweek.tick()],
+        "embeds": [{
+            title: "Upkeep Time!!",
+            description: "ได้เวลาจ่ายค่ากินอยู่จำนวน 10 gp ของสัปดาห์ที่ " + (new Date(Date.now() + timezoneDiffTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric"}) + " แล้วจ้า!\n\n(กด !ww เพื่อรับ workweek)",
+            image:
+            {
+                url: "https://i.ibb.co/1fKg57M4/Gemini-Generated-Image-ppub2ppub2ppub2p.png"
+            },
+            color: 0xFFFFFF
+        }],
         components: [],
       }
     });

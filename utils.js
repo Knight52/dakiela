@@ -116,29 +116,29 @@ export function DiscordUpdateTextResponse(res, msg)
 export function DiscordSelectionBoxResponse(res, list, custom_id, msg)
 {
   return res.send({
-            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: {
-                // Indicates it'll be an ephemeral message
-                flags: InteractionResponseFlags.EPHEMERAL | InteractionResponseFlags.IS_COMPONENTS_V2,
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+        // Indicates it'll be an ephemeral message
+        flags: InteractionResponseFlags.EPHEMERAL | InteractionResponseFlags.IS_COMPONENTS_V2,
+        components: [
+            {
+                type: MessageComponentTypes.TEXT_DISPLAY,
+                content: msg,
+            },
+            {
+                type: MessageComponentTypes.ACTION_ROW,
                 components: [
                     {
-                        type: MessageComponentTypes.TEXT_DISPLAY,
-                        content: msg,
-                    },
-                    {
-                        type: MessageComponentTypes.ACTION_ROW,
-                        components: [
-                            {
-                                type: MessageComponentTypes.STRING_SELECT,
-                                // Append game ID
-                                custom_id: custom_id,
-                                options: list,
-                            },
-                        ],
+                        type: MessageComponentTypes.STRING_SELECT,
+                        // Append game ID
+                        custom_id: custom_id,
+                        options: list,
                     },
                 ],
             },
-        });
+        ],
+    },
+});
 }
 export async function DiscordRequest(endpoint, options) {
   // append endpoint to root API URL

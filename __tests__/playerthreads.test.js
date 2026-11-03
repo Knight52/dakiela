@@ -1,8 +1,9 @@
 /**
  * @jest-environment node
  */
-import { playerRoomThreads, workweekThread } from "@/pages/api/tick.js";
+import { handleGuildTrading, handleGuildAssist } from "@/pages/api/tick.js";
 import {log} from "console"
+import * as fs from "node:fs"
 
 /*test("System Test for playerRoomThreads()", async ()=>
 {
@@ -19,3 +20,16 @@ test("System Test for workweekThread()", async () =>
     var tradeMultiplier = await workweekThread();
     await playerRoomThreads(tradeMultiplier);
 }, 2147483647);*/
+
+const fiona = JSON.parse(fs.readFileSync("./fiona.json", "utf-8"));
+const tim = JSON.parse(fs.readFileSync("./tim.json", "utf-8"));
+const calia = JSON.parse(fs.readFileSync("./calia.json", "utf-8"));
+
+describe("tick.js -> handleGuildTrading", ()=>
+{
+    test();
+});
+describe("tick.js -> handleGuildAssist", ()=>
+{
+
+});

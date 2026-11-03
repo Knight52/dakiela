@@ -16,7 +16,6 @@ import * as utils from '@/utils.js';
 import * as charModule from '@/commands/characters.js';
 import * as itemModule from '@/commands/items.js';
 import * as etcModule from '@/commands/etc.js';
-import * as workweek from '@/ticks/workweek.js';
 import * as events from '@/commands/event.js';
 
 export default async function handler(req, res) {

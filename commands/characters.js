@@ -13,25 +13,24 @@ export async function coin(req, res, optionsData, userId)
         offset -= optionsData["remove"];
     
     var embedContent = [];
+    let title = null;
     if(offset != 0)
     {
         var content = {};
         await db.execute({sql: "update character set coin = coin + ? where owner = ? and current = 1", args: [offset, userId]});
         if(offset > 0)
         {
-            content.title = "เพิ่มเงินจำนวน " + offset + " gp แล้ว\n";
+            title = "เพิ่มเงินจำนวน " + offset + " gp แล้ว\n";
         }
         else if (offset < 0)
         {
-            content.title = "ลดเงินจำนวน " + offset + " gp แล้ว\n";
+            title = "ลดเงินจำนวน " + offset + " gp แล้ว\n";
         }
-
-        embedContent.push(content);
     }
 
     var charResult = (await db.execute({sql: "select * from character where owner = ? and current = 1", args: [userId]})).rows[0];
 
-    embedContent.push(await embed.coinEmbed(charResult.id, offset, null));
+    embedContent.push(await embed.coinEmbed(charResult.id, offset, title));
 
     return DiscordEmbedResponse(res, req, embedContent);
 }
