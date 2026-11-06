@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { handleGuildTrading, handleGuildAssist } from "@/pages/api/tick.js";
+import { handleGuildTrading, handleGuildAssist, questRoom } from "@/pages/api/tick.js";
 import {log} from "console"
 import * as fs from "node:fs"
 
@@ -21,15 +21,25 @@ test("System Test for workweekThread()", async () =>
     await playerRoomThreads(tradeMultiplier);
 }, 2147483647);*/
 
-const fiona = JSON.parse(fs.readFileSync("./fiona.json", "utf-8"));
-const tim = JSON.parse(fs.readFileSync("./tim.json", "utf-8"));
-const calia = JSON.parse(fs.readFileSync("./calia.json", "utf-8"));
-
-describe("tick.js -> handleGuildTrading", ()=>
+/*describe("tick.js -> handleGuildTrading", ()=>
 {
     test();
 });
 describe("tick.js -> handleGuildAssist", ()=>
 {
 
+});*/
+describe("tick.js -> questRoomThreads", ()=>
+{
+    test("questRoomThread", async()=>
+    {
+        await questRoom({
+            'QUEST_FORUM':{
+                channel: "1568096598431637564"
+            },
+            'REPORT': {
+                channel: "1463137184663081045"
+            }
+        }, Date.now())
+    });
 });

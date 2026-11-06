@@ -1,7 +1,7 @@
 import * as utils from '../utils.js'
 import * as embeds from "../commands/embeds.js";
 import { DiceRoller } from "dice-roller-parser";
-import { timezoneDiffTick } from '@/constants.js';
+import { oneDayTick, oneWeekTick, timezoneDiffTick } from '@/constants.js';
 
 export function tick(multipliers)
 {
@@ -159,13 +159,14 @@ export function tick(multipliers)
         image = "https://i.pinimg.com/1200x/54/ee/87/54ee87c9a67c6e184979506a27c9ae14.jpg" 
         color = 0xFFFF00;
     }
-
+    let now = Date.now();
     return {
-            title: "Weekly Event!! (" + (new Date(Date.now() + timezoneDiffTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric"}) + ")",
-            description: "d100 = " + roll + "\n\n" + desc,
-            image: {
-                url: image
-            },
-            color: color
-        }
+        title: "เหตุการณ์ประจำสัปดาห์ที่ " + (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { day: "numeric"}) + " - " + 
+            (new Date(now + timezoneDiffTick - oneDayTick)).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric"}),
+        description: "d100 = " + roll + "\n\n" + desc,
+        image: {
+            url: image
+        },
+        color: color
+    }
 }

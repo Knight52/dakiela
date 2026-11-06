@@ -2,7 +2,7 @@ import * as weeklyEvent from "@/ticks/weeklyevent.js";
 import * as utils from "@/utils.js";
 import * as event from "@/commands/event.js";
 import {db} from "@/database/database.js";
-import { oneWeekTick, oneHourTick, timezoneDiffTick } from "@/constants";
+import { oneWeekTick, oneHourTick, timezoneDiffTick, oneDayTick } from "@/constants";
 
 export default async function handler(req, res)
 {
@@ -14,6 +14,8 @@ export default async function handler(req, res)
     }
     var rows = (await db.execute("select * from configuration")).rows;
     let entries = {};
+    
+    var now = Date.now();
     rows.forEach(row=>
     {
       entries[row.name] = {
@@ -24,12 +26,77 @@ export default async function handler(req, res)
     });
     
     let tradeMultiplier = await workweekThread(entries);
-    await playerRoomThreads(tradeMultiplier, entries);
+    await playerRoomThreads(tradeMultiplier, entries, now);
+    await questRoom(entries, now);
 
     res.status(200).json({ name: "Tick complete!" });
 }
 
-export async function playerRoomThreads(guildTradingMultiplier, entries)
+export async function questRoom(entries, now)
+{
+  var forum = entries['QUEST_FORUM'].channel;
+  var report = entries['REPORT'].channel;
+
+  var weekAgoText = (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { day: "numeric"}) + " - " + 
+    (new Date(now + timezoneDiffTick - oneDayTick)).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric"});
+  var channelInfo = await utils.DiscordRequest(`channels/${forum}`, { method: 'GET' });
+
+  channelInfo = await channelInfo.json();
+
+  var activeThreads = await utils.DiscordRequest(`guilds/${channelInfo.guild_id}/threads/active`, { method: 'GET' });
+  activeThreads = await activeThreads.json()
+
+  var allThreads = activeThreads.threads.filter(x => x.parent_id == forum);
+
+  var archivedThreads = await utils.DiscordRequest(`channels/${forum}/threads/archived/public`, {method: 'GET'});
+
+  archivedThreads = await archivedThreads.json();
+  allThreads = allThreads.concat(archivedThreads.threads).filter(x =>
+    (now - new Date(x.thread_metadata.create_timestamp)) < oneWeekTick
+  );
+
+  await utils.DiscordRequest(`channels/${report}/messages`,
+  {
+    method: 'POST',
+    body: {
+      embeds: [
+        {
+          title: `รายงานเควสท์สัปดาห์ที่ ${weekAgoText}`,
+          fields: [
+            {
+              "name": "Overview",
+              value: `มีทั้งหมด ${allThreads.length} เควสท์`,
+              inline: true
+            },
+            ...questField(allThreads, channelInfo)
+          ],
+          "color": 0xac1cff,
+          "thumbnail":{
+            "url": "https://ao4cowzhmgwkktn4.public.blob.vercel-storage.com/Gemini_Generated_Image_ja0bvjja0bvjja0b.jpg"
+          }
+        },
+      ]
+    }
+  });
+}
+
+export function questField(allThreads, channelInfo)
+{
+  const linkPerField = 10;
+  let outgoing = [{
+    "name": "เควสท์ที่ตรวจพบ",
+    "value": allThreads.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.parent_id}/${x.id}`).join("\n")
+  }]
+  for(let i = linkPerField; i< allThreads.length; i += linkPerField)
+  {
+    outgoing.push({
+      name: "",
+      value: allThreads.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.parent_id}/${x.id}`).join("\n")
+    })
+  }
+  return outgoing;
+}
+export async function playerRoomThreads(guildTradingMultiplier, entries, now)
 {
   var forum = entries['PLAYER_FORUM'].channel;
   var avrae = entries['AVRAE'].user;
@@ -49,8 +116,8 @@ export async function playerRoomThreads(guildTradingMultiplier, entries)
   archivedThreads = await archivedThreads.json();
   allThreads = allThreads.concat(archivedThreads.threads);
 
-  var now = Date.now();
-  var weekAgoText = (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric" });
+  var weekAgoText = (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { day: "numeric"}) + " - " + 
+    (new Date(now + timezoneDiffTick - oneDayTick)).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric"});
   var out = [];
   var assistSuccess = [];
   var assistFail = [];
