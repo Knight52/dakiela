@@ -85,13 +85,13 @@ export function questField(allThreads, channelInfo)
   const linkPerField = 10;
   let outgoing = [{
     "name": "เควสท์ที่ตรวจพบ",
-    "value": allThreads.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.parent_id}/${x.id}`).join("\n")
+    "value": allThreads.slice(0, linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.id}/${x.id} - ${x.name}`).join("\n")
   }]
   for(let i = linkPerField; i< allThreads.length; i += linkPerField)
   {
     outgoing.push({
       name: "",
-      value: allThreads.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.parent_id}/${x.id}`).join("\n")
+      value: allThreads.slice(i, i+linkPerField).map(x => `https://discord.com/channels/${channelInfo.guild_id}/${x.id}/${x.id} - ${x.name}`).join("\n")
     })
   }
   return outgoing;
@@ -427,6 +427,9 @@ export async function workweekThread(entries)
   var workweekInfo = entries['WEEKLY_TICK'];
   var mainhall = entries['MAINHALL'].channel;
   
+  var weekAgoText = (new Date(now + timezoneDiffTick - oneWeekTick)).toLocaleDateString("th-TH", { day: "numeric"}) + " - " + 
+    (new Date(now + timezoneDiffTick - oneDayTick)).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric"});
+
   await utils.DiscordRequest(`channels/${workweekInfo.channel}/messages`, 
     {
       method: 'POST', 
@@ -434,7 +437,7 @@ export async function workweekThread(entries)
         "content": "<@&" + workweekInfo.role + ">!",
         "embeds": [{
             title: "Upkeep Time!!",
-            description: "ได้เวลาจ่ายค่ากินอยู่จำนวน 10 gp ของสัปดาห์ที่ " + (new Date(Date.now() + timezoneDiffTick)).toLocaleDateString("th-TH", { month: "long", day: "numeric", year: "numeric"}) + " แล้วจ้า!\n\n(กด !ww เพื่อรับ workweek)",
+            description: "ได้เวลาจ่ายค่ากินอยู่จำนวน 10 gp ของสัปดาห์ที่ " + weekAgoText + " แล้วจ้า!\n\n(กด !ww เพื่อรับ workweek)",
             image:
             {
                 url: "https://i.ibb.co/1fKg57M4/Gemini-Generated-Image-ppub2ppub2ppub2p.png"

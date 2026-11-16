@@ -75,10 +75,6 @@ export default async function handler(req, res) {
     {
       return charModule.dmWorkweekButton(req, res, userId, data.values[0], userId);
     }
-    if(componentId.startsWith(workweek.button_id_prefix))
-    {
-      return workweek.click(res, req, componentId, userId);
-    }
     if(utils.VerifyUser(userId, componentId))
     {
       if(componentId.startsWith(itemModule.inventoryPrefix.edit))
