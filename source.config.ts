@@ -7,7 +7,8 @@ export const { docs, meta } = defineDocs({
 export default defineConfig({
   mdxOptions:{
     remarkImageOptions:{
-      external:true
+      external:true,
+      onError: "ignore"
     }
   }
 });
