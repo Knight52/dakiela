@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "fumadocs-mdx && next dev",
-    "build": "fumadocs-mdx && next build",
-    "start": "fumadocs-mdx && next start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint",
     "register": "node commands.js",
     "initdb": "node database/init.js",
@@ -15,12 +15,11 @@
     "import_establishment": "node database/import_establishment.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "postbuild": "node commands.js && fumadocs-mdx"
+    "postbuild": "node commands.js"
   },
   "dependencies": {
     "@fuma-translate/react": "^1.0.2",
     "@fumadocs-editor/studio": "^0.3.0",
-    "@fumadocs-editor/ui": "^0.7.0",
     "@fumadocs/language": "^0.2.21",
     "@libsql/client": "^0.18.0",
     "@vercel/functions": "^3.11.3",
@@ -31,8 +30,6 @@
     "discord-interactions": "^4.4.0",
     "dotenv": "^18.0.10",
     "fast-csv": "^5.0.8",
-    "fumadocs-core": "^16.19.3",
-    "fumadocs-ui": "^16.19.3",
     "lucide-react": "^1.73.0",
     "micro": "^10.0.1",
     "next": "16.4.6",
@@ -54,7 +51,6 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^10",
     "eslint-config-next": "16.4.6",
-    "fumadocs-mdx": "^15.6.2",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "node-mocks-http": "^1.18.1",

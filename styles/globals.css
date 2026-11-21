@@ -1,5 +1,2 @@
 @import "tailwindcss";
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
-@source "../components";
 @source inline("float-left float-right clear-left clear-right max-sm:float-none max-sm:w-full max-sm:mx-0");
