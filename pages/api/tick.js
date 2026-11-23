@@ -3,15 +3,18 @@ import * as utils from "@/utils.js";
 import * as event from "@/commands/event.js";
 import {db} from "@/database/database.js";
 import { oneWeekTick, oneHourTick, timezoneDiffTick, oneDayTick } from "@/constants";
+import { handleGuildAssist } from "./playerRoom/guildAssist";
+import { handleGuildTrading } from "./playerRoom/guildTrading";
+import { handleRunningBusiness } from "./playerRoom/runnigBusiness";
 
 export default async function handler(req, res)
 {
     const authHeader = req.headers.authorization;
     const cronSecret = process.env.CRON_SECRET;
-
+/*
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return res.status(401).end('Unauthorized');
-    }
+    }*/
     var rows = (await db.execute("select * from configuration")).rows;
     let entries = {};
     
@@ -25,9 +28,11 @@ export default async function handler(req, res)
       }
     });
     
-    let tradeMultiplier = await workweekThread(entries);
-    await playerRoomThreads(tradeMultiplier, entries, now);
-    await questRoom(entries, now);
+    let multiplier = await workweekThread(entries, now);
+    await Promise.all([
+      playerRoomThreads(multiplier.trade, multiplier.business, entries, now),
+      questRoom(entries, now)
+    ]);
 
     res.status(200).json({ name: "Tick complete!" });
 }
@@ -96,7 +101,7 @@ export function questField(allThreads, channelInfo)
   }
   return outgoing;
 }
-export async function playerRoomThreads(guildTradingMultiplier, entries, now)
+export async function playerRoomThreads(guildTradingMultiplier, runningBusinessBonus, entries, now)
 {
   var forum = entries['PLAYER_FORUM'].channel;
   var avrae = entries['AVRAE'].user;
@@ -228,6 +233,31 @@ export async function playerRoomThreads(guildTradingMultiplier, entries, now)
       });
     }
 
+    let runningBusinessResult = await handleRunningBusiness(messages, avrae, runningBusinessBonus);
+    for(let j = 0; j< runningBusinessResult.length; j++)
+    {
+      let bonusText = "";
+      if(runningBusinessBonus != 0)
+        bonusText = "ได้รับโบนัสการทอย " + runningBusinessBonus + " จากเหตุการณ์\n\n";
+
+      let desc = "";
+      if(!runningBusinessResult[j].rollPost)
+        desc += `ทอยผลรายได้ของ Trading Post...\n${runningBusinessResult[j].rollString} = ${runningBusinessResult[j].rollResult}\n\n`;
+      /*else
+        desc += `ตรวจพบการทอยเอง = ${runningBusinessResult[j].rollResult}\nhttps://discord.com/channels/${channelInfo.guild_id}/${allThreads[i].id}/${runningBusinessResult[j].rollPost}\n\n`;*/
+      desc += `Trading Post ได้สร้างรายได้ทั้งหมด ${runningBusinessResult[j].rollResult.toLocaleString()} gp`;
+      embeds.push({
+        "title": "Revenue for Running Business Arrived",
+        "description": bonusText + desc,
+        "footer": {
+          "text": `สัปดาห์ที่ ${weekAgoText}`
+        },
+        "thumbnail":{
+          "url": "https://ao4cowzhmgwkktn4.public.blob.vercel-storage.com/the-bustling-trade-ward-epic-medieval-fantasy-marketplace-julia-the-pooh.jpg"
+        },
+        "color": 0xFFFF00
+      });
+    }
     if(embeds.length > 0)
     {
       requests.push(utils.DiscordRequest(`channels/${allThreads[i].id}/messages`, 
@@ -341,84 +371,14 @@ function tradingFields(guildTradings, channelInfo)
 
   return outgoing;
 }
-export async function handleGuildTrading(message)
-{
-  let content = JSON.stringify(message).toLowerCase().replace("\n", "").replace("\r", "");
-  let regex = /จากยอดขายได้ทั้งหมด (-?\d+) gp.*guild earned : (-?\d+).*character payment :\*\* (-?\d+) gp/g;
-  var regexResult = regex.exec(content);
-  if(regexResult.length != 4)
-    return null;
 
-  return {
-    total: parseInt(regexResult[1]),
-    guild: parseInt(regexResult[2]),
-    player: parseInt(regexResult[3]),
-    messageId: message.id,
-    channelId: message.channel_id,
-    content: content
-  }
-}
-export async function handleGuildAssist(messages, avraeId, timestamp)
-{
-  var out = { postRead: 0, foundRolls: []};
-  if(messages[0].author.id == avraeId && 
-    JSON.stringify(messages[0]).toLowerCase().indexOf("took part in the guild assist") >= 0)
-  {
-    //Ray's script
-    out.postRead = 0;
-    let content = JSON.stringify(messages[0]).toLowerCase();
-    var regex = /= `(\d+)/g;
-    var regexResult = regex.exec(content);
-    if(regexResult != null && regexResult.length > 1)
-    {
-      out.foundRolls.push(
-        { 
-          result: parseInt(regexResult[1]),
-          messageId: messages[0].id,
-          channelId: messages[0].channel_id
-        });
-    }
-  }
-  else
-  {
-    //player's manual
-    messages = messages.filter(x => x.author.id == avraeId)
-    for(var i = 0; i< messages.length; i++)
-    {
-      var time = utils.TimeTextToTick(messages[i].timestamp);
-
-      if(time - timestamp > oneHourTick)
-        continue;
-
-      let content = messages[i].content + " " + JSON.stringify(messages[i].embeds.map(x => x.title));
-      if(content.toLowerCase().indexOf("athletics") < 0)
-        continue;
-      
-      var desc = messages[i].embeds.map(x => x.description + JSON.stringify(x.fields));
-      for(var j = 0; j< desc.length; j++)
-      {
-        var regex = /= `(\d+)/g;
-        var regexResult = null;
-        do
-        {
-          regexResult = regex.exec(desc[j]);
-          if(regexResult != null && regexResult.length > 1){
-            out.foundRolls.push({ result: parseInt(regexResult[1]), messageId: messages[i].id, channelId: messages[i].channel_id});
-          }
-        } while(regexResult);
-      }
-      out.postRead = i;
-    }
-  }
-  return out;
-}
-
-export async function workweekThread(entries)
+export async function workweekThread(entries, now)
 {
   var attachments = [];
   var files = [];
   var multipliers = {
-    trade: 1
+    trade: 1,
+    business: 0
   };
   var embeds = [ 
     weeklyEvent.tick(multipliers), 
@@ -459,5 +419,5 @@ export async function workweekThread(entries)
     }
   );
 
-  return multipliers.trade;
+  return multipliers;
 }

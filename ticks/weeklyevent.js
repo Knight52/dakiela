@@ -6,9 +6,9 @@ import { oneDayTick, oneWeekTick, timezoneDiffTick } from '@/constants.js';
 export function tick(multipliers)
 {
     multipliers.trade = 1;
+    multipliers.business = 0;
     const diceRoller = new DiceRoller();
 
-    //	Returns the total rolled value
     const roll = diceRoller.rollValue("d100");
 
     var text = "";
@@ -53,6 +53,7 @@ export function tick(multipliers)
         image = "https://i.pinimg.com/1200x/27/1e/90/271e900de7d188c5196fe1a2ed6f60c4.jpg"
         color = 0xFFE500;
         multipliers.trade += percentage / 100;
+        multipliers.business = bonus;
     }
     else if (roll <= 72)
     {
