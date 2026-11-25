@@ -56,6 +56,7 @@ function processRunningBusiness(messages, avraeId, rollBonus, timestamp)
         if(messages[i].author.id != avraeId)
             continue;
 
+        out.postRead = i;
         var regex = /1d100 \((\d+)\)/gms;
 
         let content = messages[i].content;
@@ -68,7 +69,6 @@ function processRunningBusiness(messages, avraeId, rollBonus, timestamp)
         }
     }
 
-    out.postRead = i;
     if(d100Result == 0)
         return out;
 
@@ -102,17 +102,16 @@ function processRunningBusiness(messages, avraeId, rollBonus, timestamp)
         if (messages[i].author.id != avraeId)
             continue;
 
+        out.postRead = i;
         let regexResult = rollRegex.exec(messages[i].content);
         if(!regexResult || regexResult.length != 2)
             continue;
 
-        console.log(regexResult[1]);
         rollResult = parseInt(regexResult[1]);
         out.rollResult = rollResult;
         out.rollPost = messages[i].id;
     }
 
-    out.postRead = i;
 
     if(rollResult == 0)
     {

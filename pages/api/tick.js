@@ -238,7 +238,7 @@ export async function playerRoomThreads(guildTradingMultiplier, runningBusinessB
     {
       let bonusText = "";
       if(runningBusinessBonus != 0)
-        bonusText = "ได้รับโบนัสการทอย " + runningBusinessBonus + " จากเหตุการณ์\n\n";
+        bonusText = "ได้รับโบนัสการทอย " + runningBusinessBonus + " แต้มจากเหตุการณ์ประจำสัปดาห์ ทำให้ผลการทอยกลายเป็น " + runningBusinessResult[j].d100Result + "...\n\n";
 
       let desc = "";
       if(!runningBusinessResult[j].rollPost)
@@ -247,7 +247,7 @@ export async function playerRoomThreads(guildTradingMultiplier, runningBusinessB
         desc += `ตรวจพบการทอยเอง = ${runningBusinessResult[j].rollResult}\nhttps://discord.com/channels/${channelInfo.guild_id}/${allThreads[i].id}/${runningBusinessResult[j].rollPost}\n\n`;*/
       desc += `Trading Post ได้สร้างรายได้ทั้งหมด ${runningBusinessResult[j].rollResult.toLocaleString()} gp`;
       embeds.push({
-        "title": "Revenue for Running Business Arrived",
+        "title": "Revenue for Running Business",
         "description": bonusText + desc,
         "footer": {
           "text": `สัปดาห์ที่ ${weekAgoText}`

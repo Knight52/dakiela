@@ -99,7 +99,9 @@ export function tick(multipliers)
         text = "Lost Employee" 
         var missing = ""
         var result = diceRoller.rollValue('1d4');
-        if (result == 2)
+        if (result == 1)
+            missing = "Library";
+        else if (result == 2)
             missing = "Garden"
         else 
             missing = "Smithy"

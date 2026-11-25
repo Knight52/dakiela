@@ -14,7 +14,9 @@ export async function coinEmbed(characterId, changes, title, thumbnail = "https:
     else
         changes = "";
     var content = {};
-    var total = Number(result.coin).toFixed(2);
+    var total = Number(result.coin).toLocaleString('th-TH', {
+         minimumFractionDigits: 2,
+    });
     var gp = total.substring(0, total.length - 3);
     var sp = total.substring(total.length - 2, total.length - 1);
     var cp = total.substring(total.length - 1);
